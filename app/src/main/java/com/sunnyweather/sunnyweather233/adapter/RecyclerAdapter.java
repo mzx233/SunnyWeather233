@@ -54,14 +54,16 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
                     mContext.startActivity(intent);
                     ((MainActivity)mContext).finish();
                 }else{
-                    WeatherDetails.flag = 1;
-                    WeatherDetails.drawLayout.closeDrawers();
-                    WeatherDetails.swip.setRefreshing(true);
-                    Intent intent = new Intent(mContext, WeatherDetails.class);
-                    intent.putExtra("name",place.getName());
-                    intent.putExtra("lng,lat",place.getLocation().getLng()+","+place.getLocation().getLat());
-                    mContext.startActivity(intent);
-                    ((WeatherDetails)mContext).finish();
+
+                    WeatherDetails activity = (WeatherDetails)mContext;
+                    activity.flag = 1;
+                    activity.drawLayout.closeDrawers();
+                    MainActivity.sp.edit().putString("name", place.getName()).apply();
+                    MainActivity.sp.edit().putString("lngLat",place.getLocation().getLng()+","+place.getLocation().getLat()).apply();
+                    activity.lngLat = place.getLocation().getLng()+","+place.getLocation().getLat();
+                    activity.doFresh();
+
+
                 }
             }
         });

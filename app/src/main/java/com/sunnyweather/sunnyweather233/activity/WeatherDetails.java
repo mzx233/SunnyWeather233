@@ -1,5 +1,7 @@
 package com.sunnyweather.sunnyweather233.activity;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
@@ -8,6 +10,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -60,28 +64,26 @@ public class WeatherDetails extends AppCompatActivity  {
     private TextView zwx;
     private TextView washCar;
     private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    private String lngLat;
-    public static int flag = 0;
+    public  String lngLat;
+    public  int flag = 0;
+    public  int flagA = 0;
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
         setContentView(R.layout.activity_weather_details);
         initView();
-
         Intent intent = getIntent();
-
-        if (MainActivity.sp.getString("name", "").equals("")||flag==1) {
+        if (MainActivity.sp.getString("name", "").equals("")|| flag==1) {
             MainActivity.sp.edit().putString("name", intent.getStringExtra("name")).apply();
             MainActivity.sp.edit().putString("lngLat", intent.getStringExtra("lng,lat")).apply();
+            flag = 0;
         }
-        String name = MainActivity.sp.getString("name", "");
         lngLat = MainActivity.sp.getString("lngLat", "");
-        viewModel.saveAdress(name, lngLat);
-        doHttpRequest(lngLat);
-        doReserveHttp(lngLat);
+        doFresh();
         swip.setColorSchemeResources(R.color.colorPrimary);
         swip.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -89,7 +91,6 @@ public class WeatherDetails extends AppCompatActivity  {
                 doFresh();
             }
         });
-
 
         if (Build.VERSION.SDK_INT >= 21) {
             View decorView = getWindow().getDecorView();
@@ -99,7 +100,6 @@ public class WeatherDetails extends AppCompatActivity  {
             getWindow().setStatusBarColor(Color.TRANSPARENT);
         }
 
-
         setSupportActionBar(detailTb);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -107,18 +107,45 @@ public class WeatherDetails extends AppCompatActivity  {
             actionBar.setHomeAsUpIndicator(R.drawable.ic_home);
         }
         collBar.setTitle(" ");
+
+
+
+
+    }
+
+    /**
+     * 自动关闭软键盘
+     * @param activity
+     */
+    public static void closeKeybord(Activity activity) {
+        InputMethodManager imm =  (InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if(imm != null) {
+            imm.hideSoftInputFromWindow(activity.getWindow().getDecorView().getWindowToken(), 0);
+        }
+    }
+
+
+
+
+    public void doFresh(){
+        toolTitle.setFocusable(true);
+        toolTitle.setFocusableInTouchMode(true);
+        toolTitle.requestFocus();
+        swip.setRefreshing(true);
+        closeKeybord(this);
+        doHttpRequest(lngLat);
+        doReserveHttp(lngLat);
+        viewModel.saveAdress(MainActivity.sp.getString("name", ""), lngLat);
         toolTitle.setText(viewModel.adressLiveData.getValue().get("name"));
 
 
-
     }
 
-    public void doFresh(){
-        doHttpRequest(lngLat);
-        doReserveHttp(lngLat);
-    }
+
 
     private void doLifeIndex(){
+
+        flagA = 0;
         Date date = new Date(System.currentTimeMillis());
         for(int i=0;i<viewModel.reserveBean.getValue().getTemperature().size();i++){
             if(viewModel.reserveBean.getValue().getTemperature().get(i).getDate().substring(0,10).equals(simpleDateFormat.format(date))){
@@ -195,16 +222,25 @@ public class WeatherDetails extends AppCompatActivity  {
                 case 2:
                     doReserveUI();
                     break;
+                case 3:
+                    TwiceOfOne();
             }
         }
     };
+
+    private void TwiceOfOne(){
+        flagA++;
+        if(flagA == 2){
+            doLifeIndex();
+        }
+    }
 
     private void doReserveUI() {
         ReserveAdapter adapter = new ReserveAdapter(viewModel.reserveBean.getValue());
         LinearLayoutManager manager = new LinearLayoutManager(this);
         preRe.setLayoutManager(manager);
         preRe.setAdapter(adapter);
-        doLifeIndex();
+        handler.sendEmptyMessage(3);
     }
 
     private void doUI() {
@@ -305,6 +341,8 @@ public class WeatherDetails extends AppCompatActivity  {
 
         temp.setText(viewModel.getTemp() + " ℃");
         air.setText("空气指数 " + viewModel.getAqi());
+        flagA = 1;
+        handler.sendEmptyMessage(3);
     }
 
     private void initView() {

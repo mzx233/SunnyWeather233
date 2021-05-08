@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.sunnyweather.sunnyweather233.activity.WeatherDetails;
 
+
 public class MainActivity extends AppCompatActivity {
 
     public static SharedPreferences sp;

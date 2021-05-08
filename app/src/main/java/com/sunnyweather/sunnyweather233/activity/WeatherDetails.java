@@ -66,7 +66,6 @@ public class WeatherDetails extends AppCompatActivity  {
     private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
     public  String lngLat;
     public  int flag = 0;
-    public  int flagA = 0;
 
 
 
@@ -80,7 +79,7 @@ public class WeatherDetails extends AppCompatActivity  {
         if (MainActivity.sp.getString("name", "").equals("")|| flag==1) {
             MainActivity.sp.edit().putString("name", intent.getStringExtra("name")).apply();
             MainActivity.sp.edit().putString("lngLat", intent.getStringExtra("lng,lat")).apply();
-            flag = 0;
+
         }
         lngLat = MainActivity.sp.getString("lngLat", "");
         doFresh();
@@ -134,7 +133,6 @@ public class WeatherDetails extends AppCompatActivity  {
         swip.setRefreshing(true);
         closeKeybord(this);
         doHttpRequest(lngLat);
-        doReserveHttp(lngLat);
         viewModel.saveAdress(MainActivity.sp.getString("name", ""), lngLat);
         toolTitle.setText(viewModel.adressLiveData.getValue().get("name"));
 
@@ -145,7 +143,6 @@ public class WeatherDetails extends AppCompatActivity  {
 
     private void doLifeIndex(){
 
-        flagA = 0;
         Date date = new Date(System.currentTimeMillis());
         for(int i=0;i<viewModel.reserveBean.getValue().getTemperature().size();i++){
             if(viewModel.reserveBean.getValue().getTemperature().get(i).getDate().substring(0,10).equals(simpleDateFormat.format(date))){
@@ -223,17 +220,12 @@ public class WeatherDetails extends AppCompatActivity  {
                     doReserveUI();
                     break;
                 case 3:
-                    TwiceOfOne();
+                    doLifeIndex();
             }
         }
     };
 
-    private void TwiceOfOne(){
-        flagA++;
-        if(flagA == 2){
-            doLifeIndex();
-        }
-    }
+
 
     private void doReserveUI() {
         ReserveAdapter adapter = new ReserveAdapter(viewModel.reserveBean.getValue());
@@ -341,8 +333,8 @@ public class WeatherDetails extends AppCompatActivity  {
 
         temp.setText(viewModel.getTemp() + " ℃");
         air.setText("空气指数 " + viewModel.getAqi());
-        flagA = 1;
-        handler.sendEmptyMessage(3);
+        doReserveHttp(lngLat);
+
     }
 
     private void initView() {
